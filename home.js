@@ -63,6 +63,41 @@ function drawFireworks(t, bloom) {
   });
 }
 
+function drawFinaleOverlay(t, bloom) {
+  const amount = easeOut(bloom);
+  if (amount <= 0) return;
+  const centerX = w * .71;
+  const flowerY = h * .36;
+  const flowerSpots = [-.17, -.1, -.03, .05, .12, .19];
+  flowerSpots.forEach((offset, index) => {
+    const x = centerX + offset * w;
+    const y = flowerY + Math.sin(index * 1.7) * 13;
+    const size = (10 + (index % 2) * 3) * amount;
+    ctx.save(); ctx.translate(x, y); ctx.globalAlpha = amount;
+    for (let petal = 0; petal < 5; petal += 1) {
+      ctx.rotate(Math.PI * 2 / 5); ctx.beginPath();
+      ctx.ellipse(0, -size * .72, size * .42, size, 0, 0, Math.PI * 2);
+      ctx.fillStyle = ['#ff8dbd', '#ffd45e', '#f6ff87'][index % 3]; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(0, 0, size * .3, 0, Math.PI * 2); ctx.fillStyle = '#fff8c7'; ctx.fill();
+    ctx.restore();
+  });
+  const bursts = [{ x: .53, y: .2, color: '#f6ff87' }, { x: .86, y: .23, color: '#ff8dbd' }, { x: .7, y: .12, color: '#a8d7ff' }];
+  bursts.forEach((burst, index) => {
+    const pulse = .5 + .5 * Math.sin(t * 1.45 + index * 1.2);
+    const radius = (32 + pulse * 20) * amount;
+    ctx.save(); ctx.translate(w * burst.x, h * burst.y); ctx.globalAlpha = (.35 + pulse * .45) * amount;
+    for (let ray = 0; ray < 12; ray += 1) {
+      const angle = Math.PI * 2 * ray / 12;
+      const length = radius * (.8 + (ray % 4) * .1);
+      ctx.strokeStyle = burst.color; ctx.lineWidth = 2; ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * radius * .15, Math.sin(angle) * radius * .15);
+      ctx.lineTo(Math.cos(angle) * length, Math.sin(angle) * length); ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+
 function draw(now) {
   if (!w || !h) return;
   ctx.clearRect(0, 0, w, h); px += (targetX - px) * .045; py += (targetY - py) * .045;
@@ -90,6 +125,7 @@ function draw(now) {
     branch(nx, ny, len * .72, nextAngle + .5, depth - 1, seed + 3.2);
   }
   branch(0, 0, 105, -Math.PI / 2, 6, 1); drawFlowers(tips, bloom, t); drawFireworks(t, bloom); ctx.restore();
+  drawFinaleOverlay(t, bloom);
   if (!reduced) requestAnimationFrame(draw);
 }
 
