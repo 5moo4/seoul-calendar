@@ -26,8 +26,8 @@ function drawFlowers(tips, bloom, t) {
   const amount = easeOut(bloom);
   tips.forEach((tip, index) => {
     const pulse = 1 + Math.sin(t * 2.4 + index) * .06;
-    const size = (6 + (index % 3) * 1.4) * amount * pulse;
-    const colors = ['#f3ffb2', '#ffd66b', '#f4a7c5', '#c9f58a'];
+    const size = (9 + (index % 3) * 2) * amount * pulse;
+    const colors = ['#f6ff87', '#ffd45e', '#ff8dbd', '#b7f46d'];
     ctx.save(); ctx.translate(tip.x, tip.y); ctx.rotate(tip.angle + py * .2); ctx.globalAlpha = amount;
     for (let petal = 0; petal < 5; petal += 1) {
       ctx.rotate(Math.PI * 2 / 5); ctx.beginPath();
@@ -47,15 +47,13 @@ function drawFireworks(t, bloom) {
     { x: .04, y: -.84, color: '#a8d7ff', delay: 2.4 },
   ];
   bursts.forEach((burst, burstIndex) => {
-    const phase = ((t - 3.25 - burst.delay) % 4.2 + 4.2) % 4.2;
-    if (phase > 2.25) return;
-    const progress = Math.min(1, phase / 1.35);
-    const radius = 45 * easeOut(progress) * amount;
-    const alpha = Math.min(1, (1 - Math.max(0, phase - 1.05) / 1.2)) * amount;
+    const pulse = .5 + .5 * Math.sin(t * 1.45 + burst.delay);
+    const radius = (35 + pulse * 24) * amount;
+    const alpha = (.3 + pulse * .45) * amount;
     ctx.save(); ctx.translate(burst.x * 520, burst.y * 540); ctx.globalAlpha = alpha;
     for (let spark = 0; spark < 14; spark += 1) {
       const angle = (Math.PI * 2 * spark) / 14 + burstIndex * .35;
-      const length = radius * (0.8 + ((spark * 7) % 5) / 10);
+      const length = radius * (0.85 + ((spark * 7) % 5) / 10);
       ctx.strokeStyle = burst.color; ctx.lineWidth = 1.5; ctx.beginPath();
       ctx.moveTo(Math.cos(angle) * radius * .18, Math.sin(angle) * radius * .18);
       ctx.lineTo(Math.cos(angle) * length, Math.sin(angle) * length); ctx.stroke();
