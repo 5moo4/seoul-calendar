@@ -30,7 +30,7 @@ h1 { margin:0; font-size:clamp(2rem, 8vw, 2.8rem); line-height:1.23; letter-spac
 .progress-track, .timer-track { overflow:hidden; border-radius:99px; background:#354254; }
 .progress-track { height:5px; margin:12px auto 0; width:64%; }
 #progress-fill { height:100%; width:0; background:#91d4c3; transition:width .25s ease; }
-.question-card { display:grid; place-items:center; aspect-ratio:1 / .78; min-height:190px; margin:clamp(34px, 8vh, 78px) auto 18px; width:min(100%, 380px); border:1px solid #53647b; border-radius:24px; background:#1b2737; box-shadow:0 18px 35px #0003; }
+.question-card { display:grid; place-items:center; aspect-ratio:1 / 1; min-height:190px; margin:clamp(34px, 8vh, 78px) auto 18px; width:min(100%, 380px); border:1px solid #53647b; border-radius:24px; background:#1b2737; box-shadow:0 18px 35px #0003; }
 #question { margin:0; font-family:"Noto Sans JP", sans-serif; font-size:clamp(3rem, 15vw, 5.5rem); font-weight:700; line-height:1.2; }
 .timer-track { height:8px; width:47%; margin:0 auto clamp(30px, 7vh, 56px); }
 #timer-fill { height:100%; width:100%; transform-origin:left; background:#91d4c3; }
@@ -50,4 +50,21 @@ dt { color:#b9c6d6; font-size:.8rem; } dd { margin:5px 0 0; font-size:1.25rem; f
 .secondary-button { border:1px solid #71839a; color:#f7f9fc; background:transparent; }
 [hidden] { display:none !important; }
 @media (max-height:650px) { .question-card { min-height:140px; margin:24px auto 14px; } .timer-track { margin-bottom:22px; } }
+
+
+/* Keep long kana, larger text, and landscape phones within their containers. */
+.question-card { flex-shrink:0; padding:12px; }
+#question { max-width:100%; overflow-wrap:anywhere; text-align:center; }
+.choice { overflow-wrap:anywhere; }
+.script-options label { cursor:pointer; }
+button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+@media (max-height:740px) {
+  .question-card { width:min(100%, 260px); margin-top:24px; }
+  .timer-track { margin-bottom:24px; }
+  .count-picker { margin-top:32px; }
+}
+@media (orientation:landscape) and (max-height:540px) {
+  .question-card { width:180px; min-height:0; margin-top:18px; }
+}
+
 

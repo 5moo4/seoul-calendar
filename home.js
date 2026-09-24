@@ -2,7 +2,7 @@ const canvas = document.querySelector('#growth');
 const ctx = canvas.getContext('2d');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let w = 0, h = 0, px = 0, py = 0, start = performance.now();
-let targetX = 0, targetY = 0;
+let targetX = 0, targetY = 0, frame = null;
 
 function resize() {
   const rect = canvas.getBoundingClientRect();
@@ -10,6 +10,7 @@ function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2);
   canvas.width = w * dpr; canvas.height = h * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cancelAnimationFrame(frame);
   draw(reduced ? start + 10000 : performance.now());
 }
 
@@ -126,7 +127,12 @@ function draw(now) {
   }
   branch(0, 0, 105, -Math.PI / 2, 6, 1); drawFlowers(tips, bloom, t); drawFireworks(t, bloom); ctx.restore();
   drawFinaleOverlay(t, bloom);
-  if (!reduced) requestAnimationFrame(draw);
+  if (!reduced && !document.hidden) frame = requestAnimationFrame(draw);
 }
 
-new ResizeObserver(resize).observe(canvas); resize(); if (!reduced) requestAnimationFrame(draw);
+new ResizeObserver(resize).observe(canvas); resize();
+document.addEventListener('visibilitychange', () => {
+  cancelAnimationFrame(frame);
+  if (!document.hidden) draw(performance.now());
+});
+

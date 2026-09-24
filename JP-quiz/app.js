@@ -16,40 +16,59 @@ function selectedPool() {
   if (scope === 'katakana') return DB.filter(isKatakana);
   return DB;
 }
-function setScreen(name) { Object.entries(screens).forEach(([key, el]) => el.hidden = key !== name); }
+function setScreen(name) { Object.entries(screens).forEach(([key, el]) => el.hidden = key !== name); window.scrollTo(0, 0); }
 function setCount(change) { selectedCount = Math.max(10, Math.min(100, selectedCount + change)); $('question-count').value = selectedCount; }
 $('decrease').addEventListener('click', () => setCount(-10)); $('increase').addEventListener('click', () => setCount(10));
 
 function begin() {
+  if (state) { clearTimeout(state.timer); clearTimeout(state.nextTimer); cancelAnimationFrame(state.frame); }
   const pool = selectedPool();
   const initial = shuffle(pool).slice(0, Math.min(selectedCount, pool.length));
   state = { initial, pool, queue:[...initial], completed:new Set(), attempts:0, wrong:0, timeouts:0, startedAt:performance.now(), locked:false, timer:null };
   setScreen('quiz'); showQuestion();
 }
 function optionsFor(item) {
-  const alternatives = shuffle(state.pool.filter(x => x.kana !== item.kana && x.reading !== item.reading)).slice(0, 3);
+  const unique = new Map(state.pool.filter(x => x.kana !== item.kana && x.reading !== item.reading).map(x => [x.reading, x]));
+  const alternatives = shuffle([...unique.values()]).slice(0, 3);
   return shuffle([item, ...alternatives]);
 }
 function showQuestion() {
   if (!state.queue.length) return finish();
   state.locked = false; const item = state.queue[0];
-  $('question').textContent = item.kana; $('feedback').textContent = '';
+  $('question').textContent = item.kana;
+  $('question').style.fontSize = `clamp(1.4rem, ${Math.min(15, 72 / item.kana.length)}vw, ${Math.min(5.5, 21 / item.kana.length)}rem)`; $('feedback').textContent = '';
   $('progress-label').textContent = `${state.completed.size} / ${state.initial.length}`;
   $('progress-fill').style.width = `${state.completed.size / state.initial.length * 100}%`;
   const choices = $('choices'); choices.replaceChildren();
   optionsFor(item).forEach(option => { const button = document.createElement('button'); button.className = 'choice'; button.textContent = option.reading; button.type = 'button'; button.addEventListener('click', () => answer(option, button)); choices.append(button); });
-  const fill = $('timer-fill'); fill.style.transition = 'none'; fill.style.width = '100%'; requestAnimationFrame(() => { fill.style.transition = 'width 3s linear'; fill.style.width = '0%'; });
-  state.timer = window.setTimeout(() => resolve(null), 3000);
+  state.deadline = Date.now() + 3000;
+  const token = state.deadline;
+  const tick = () => {
+    if (state.locked || state.deadline !== token) return;
+    const remaining = Math.max(0, state.deadline - Date.now());
+    $('timer-fill').style.transform = `scaleX(${remaining / 3000})`;
+    if (!remaining) return resolve(null);
+    state.frame = requestAnimationFrame(tick);
+  };
+  tick();
+  state.timer = window.setTimeout(() => { if (state.deadline === token) resolve(null); }, 3000);
 }
-function answer(option, button) { if (state.locked) return; resolve(option, button); }
+function answer(option, button) {
+  if (state.locked) return;
+  if (Date.now() >= state.deadline) return resolve(null);
+  resolve(option, button);
+}
+
 function resolve(option, clicked) {
-  if (state.locked) return; state.locked = true; clearTimeout(state.timer); state.attempts++;
+  if (state.locked) return; state.locked = true; clearTimeout(state.timer); cancelAnimationFrame(state.frame); state.attempts++;
   const item = state.queue.shift(); const correct = option && option.kana === item.kana;
   const buttons = [...$('choices').children]; const rightButton = buttons.find(b => b.textContent === item.reading);
   buttons.forEach(b => b.disabled = true);
   if (correct) { state.completed.add(item.kana); clicked.classList.add('correct'); $('feedback').textContent = '정답!'; }
   else { if (option === null) { state.timeouts++; $('feedback').textContent = '시간초과'; } else { state.wrong++; clicked.classList.add('wrong'); $('feedback').textContent = '오답'; } rightButton.classList.add('correct'); state.queue.push(item); }
-  window.setTimeout(showQuestion, 520);
+  $('progress-label').textContent = `${state.completed.size} / ${state.initial.length}`;
+  $('progress-fill').style.width = `${state.completed.size / state.initial.length * 100}%`;
+  state.nextTimer = window.setTimeout(() => { if (!document.hidden) showQuestion(); }, 520);
 }
 function finish() {
   $('progress-label').textContent = `${state.initial.length} / ${state.initial.length}`; $('progress-fill').style.width = '100%';
@@ -58,5 +77,18 @@ function finish() {
   setScreen('result');
 }
 $('start-button').addEventListener('click', begin); $('retry-button').addEventListener('click', begin); $('home-button').addEventListener('click', () => setScreen('start'));
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+document.addEventListener('visibilitychange', () => {
+  if (!state || screens.quiz.hidden) return;
+  if (document.hidden) {
+    clearTimeout(state.nextTimer);
+  } else if (state.locked) {
+    clearTimeout(state.nextTimer); showQuestion();
+  } else if (Date.now() >= state.deadline) {
+    resolve(null);
+  }
+});
+if ('serviceWorker' in navigator) window.addEventListener('load', () => {
+  navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Offline cache unavailable:', error));
+});
+
 
