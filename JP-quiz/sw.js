@@ -1,6 +1,6 @@
-const CACHE = 'kana-speed-quiz-v3';
+const CACHE = 'kana-speed-quiz-v4';
 const PREFIX = 'kana-speed-quiz-';
-const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './favicon.svg'];
+const ASSETS = ['./', './index.html', './styles.css', './app.js', './hiragana-additions.js', './manifest.webmanifest', './favicon.svg'];
 self.addEventListener('install', event => event.waitUntil(
   caches.open(CACHE).then(cache => cache.addAll(ASSETS.map(url => new Request(url, {cache:'reload'})))).then(() => self.skipWaiting())
 ));
