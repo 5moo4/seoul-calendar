@@ -11,6 +11,12 @@ for (const item of globalThis.HIRAGANA_ADDITIONS || []) {
     knownKana.add(item.kana);
   }
 }
+for (const item of globalThis.KATAKANA_ADDITIONS || []) {
+  if (!knownKana.has(item.kana)) {
+    DB.push(item);
+    knownKana.add(item.kana);
+  }
+}
 
 const $ = id => document.getElementById(id);
 const screens = { start: $('start-screen'), quiz: $('quiz-screen'), result: $('result-screen') };
